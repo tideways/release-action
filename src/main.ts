@@ -1,5 +1,5 @@
 import * as core from '@actions/core'
-import { wait } from './wait.js'
+import { createRelease, CreateReleaseRequest, EventType } from './api.js'
 
 /**
  * The main function for the action.
@@ -8,18 +8,48 @@ import { wait } from './wait.js'
  */
 export async function run(): Promise<void> {
   try {
-    const ms: string = core.getInput('milliseconds')
+    const apiKey = core.getInput('apiKey', { required: true })
+    core.setSecret(apiKey)
 
-    // Debug logs are only output if the `ACTIONS_STEP_DEBUG` secret is true
-    core.debug(`Waiting ${ms} milliseconds ...`)
+    const name = core.getInput('name', { required: true })
+    const type = core.getInput('type', { required: true }) as EventType
+    const description = core.getInput('description') || undefined
+    const environment = core.getInput('environment') || undefined
+    const service = core.getInput('service') || undefined
+    const compareAfterMinutes = parseInt(
+      core.getInput('compareAfterMinutes') || '90',
+      10
+    )
 
-    // Log the current timestamp, wait, then log the new timestamp
-    core.debug(new Date().toTimeString())
-    await wait(parseInt(ms, 10))
-    core.debug(new Date().toTimeString())
+    const payload: CreateReleaseRequest = {
+      apiKey,
+      name,
+      type,
+      description,
+      environment,
+      service,
+      compareAfterMinutes
+    }
 
-    // Set outputs for other workflow steps to use
-    core.setOutput('time', new Date().toTimeString())
+    const result = await createRelease(payload)
+    core.setOutput('id', result.id)
+    if (type === 'release') {
+      const query = new URLSearchParams({
+        error: result.id.toString(),
+        env: result.environment,
+        s: result.service
+      })
+      const url = `https://app.tideways.io/o/${result.name}/issues/release?${query}`
+      core.setOutput('url', url)
+
+      core.info(
+        `Successfully created release for project ${result.name}: ${url}`
+      )
+    } else {
+      core.setOutput('url', '')
+
+      core.info(`Successfully created ${type} event for project ${result.name}`)
+    }
   } catch (error) {
     // Fail the workflow run if an error occurs
     if (error instanceof Error) core.setFailed(error.message)
