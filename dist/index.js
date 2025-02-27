@@ -27246,18 +27246,39 @@ function requireCore () {
 
 var coreExports = requireCore();
 
-/**
- * Waits for a number of milliseconds.
- *
- * @param milliseconds The number of milliseconds to wait.
- * @returns Resolves with 'done!' after the wait is over.
- */
-async function wait(milliseconds) {
-    return new Promise((resolve) => {
-        if (isNaN(milliseconds))
-            throw new Error('milliseconds is not a number');
-        setTimeout(() => resolve('done!'), milliseconds);
-    });
+var libExports = requireLib();
+
+function isFailureResponse(response) {
+    return typeof response == 'object' && response != null && 'msg' in response;
+}
+function isSuccessResponse(response) {
+    return (typeof response == 'object' &&
+        response != null &&
+        'ok' in response &&
+        response.ok === true);
+}
+async function createRelease(payload) {
+    const client = new libExports.HttpClient('TidewaysReleaseAction');
+    const response = await client.post('https://app.tideways.io/api/events', JSON.stringify(payload));
+    const result = await response.readBody();
+    let parsedResult = undefined;
+    try {
+        parsedResult = JSON.parse(result);
+    }
+    catch {
+        // Ignore
+    }
+    if (response.message.statusCode === 201 && isSuccessResponse(parsedResult)) {
+        return parsedResult;
+    }
+    else {
+        if (isFailureResponse(parsedResult)) {
+            throw new Error(`API request failed with status code ${response.message.statusCode}: ${parsedResult.msg}`);
+        }
+        else {
+            throw new Error(`API request failed with status code ${response.message.statusCode}: ${result}`);
+        }
+    }
 }
 
 /**
@@ -27267,15 +27288,39 @@ async function wait(milliseconds) {
  */
 async function run() {
     try {
-        const ms = coreExports.getInput('milliseconds');
-        // Debug logs are only output if the `ACTIONS_STEP_DEBUG` secret is true
-        coreExports.debug(`Waiting ${ms} milliseconds ...`);
-        // Log the current timestamp, wait, then log the new timestamp
-        coreExports.debug(new Date().toTimeString());
-        await wait(parseInt(ms, 10));
-        coreExports.debug(new Date().toTimeString());
-        // Set outputs for other workflow steps to use
-        coreExports.setOutput('time', new Date().toTimeString());
+        const apiKey = coreExports.getInput('apiKey', { required: true });
+        coreExports.setSecret(apiKey);
+        const name = coreExports.getInput('name', { required: true });
+        const type = coreExports.getInput('type', { required: true });
+        const description = coreExports.getInput('description') || undefined;
+        const environment = coreExports.getInput('environment') || undefined;
+        const service = coreExports.getInput('service') || undefined;
+        const compareAfterMinutes = parseInt(coreExports.getInput('compareAfterMinutes') || '90', 10);
+        const payload = {
+            apiKey,
+            name,
+            type,
+            description,
+            environment,
+            service,
+            compareAfterMinutes
+        };
+        const result = await createRelease(payload);
+        coreExports.setOutput('id', result.id);
+        if (type === 'release') {
+            const query = new URLSearchParams({
+                error: result.id.toString(),
+                env: result.environment,
+                s: result.service
+            });
+            const url = `https://app.tideways.io/o/${result.name}/issues/release?${query}`;
+            coreExports.setOutput('url', url);
+            coreExports.info(`Successfully created release for project ${result.name}: ${url}`);
+        }
+        else {
+            coreExports.setOutput('url', '');
+            coreExports.info(`Successfully created ${type} event for project ${result.name}`);
+        }
     }
     catch (error) {
         // Fail the workflow run if an error occurs
