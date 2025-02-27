@@ -47,8 +47,10 @@ jobs:
   test-action:
     name: GitHub Actions Test
     runs-on: ubuntu-latest
-    # Skip forks, because they do not have access to secrets.
-    if: ${{ ! github.event.pull_request.head.repo.fork }}
+    # Skip forks and Dependabot, because they do not have access to secrets.
+    if:
+      ${{ ! github.event.pull_request.head.repo.fork && github.actor !=
+      'dependabot[bot]' }}
 
     steps:
       - name: Checkout
