@@ -1,7 +1,7 @@
 {
   "name": "@tideways/release-action",
   "description": "Create a release event on Tideways",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "author": "Tideways GmbH <support@tideways.com>",
   "type": "module",
   "private": true,
