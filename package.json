@@ -20,7 +20,7 @@
     ".": "./dist/index.js"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=24.0.0"
   },
   "scripts": {
     "bundle": "npm run format:write && npm run package",
@@ -64,7 +64,6 @@
     "rollup": "^4.46.3",
     "ts-jest": "^29.4.1",
     "ts-jest-resolver": "^2.0.1",
-    "ts-node": "^10.9.2",
     "typescript": "^5.9.2"
   },
   "optionalDependencies": {

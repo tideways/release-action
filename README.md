@@ -32,7 +32,8 @@ The available inputs of the `tideways/release-action` match the
     # Default: The default service.
     service: ''
 
-    # The timeframes around the release for which the performance will be compared. Allow values: 5 - 1440.
+    # The timeframes around the release for which the performance will be
+    # compared. Allow values: 5 - 1440.
     # Default: 90
     compareAfterMinutes: 90
 ```
