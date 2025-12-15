@@ -10,39 +10,27 @@ branding:
 inputs:
   apiKey:
     description: 'The project’s API KEY'
-    type: string
     required: true
   name:
     description: 'The release name'
-    type: string
     required: true
   type:
     description: 'The release type'
-    type: choice
     required: true
     default: 'release'
-    options:
-      - release
-      - marker
-      - maintenance
-      - down
   description:
     description: 'The release descrption'
-    type: string
     required: false
   environment:
     description: 'The environment that was released'
-    type: string
     required: false
   service:
     description: 'The service that was released'
-    type: string
     required: false
   compareAfterMinutes:
     description:
       'The timeframes around the release for which the performance will be
       compared'
-    type: number
     required: false
     default: 90
 
