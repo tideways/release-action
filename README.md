@@ -9,7 +9,7 @@ The available inputs of the `tideways/release-action` match the
 [parameters of the “Release Tracking” API](https://support.tideways.com/documentation/setup/configuration/releases.html).
 
 ```yml
-- uses: tideways/release-action@v1
+- uses: tideways/release-action@v2
   with:
     # The project’s API key.
     apiKey: ${{ secrets.TIDEWAYS_API_KEY }}
